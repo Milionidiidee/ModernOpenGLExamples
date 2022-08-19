@@ -6,6 +6,11 @@
 #include <string>
 #include <sstream>
 
+#define ASSERT(x) if(!(x)) __debugbreak();
+#define GLCall(x) GLClearErrors();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
 struct ShaderProgramSource
 {
     std::string vertexSource;
@@ -17,12 +22,14 @@ static void GLClearErrors()
     while (glGetError() != GL_NO_ERROR);
 }
 
-static void GLCheckErrors()
+static bool GLLogCall(const char* function, const char* file, int line)
 {
     while (GLenum error = glGetError())
     {
-        std::cout << "OpenGL Error: " << error << '\n';
+        std::cout << "OpenGL Error: " << error << " function [" << function << "] in file (" << file << ") at line " << line << '\n';
+        return false;
     }
+    return true;
 }
 
 static ShaderProgramSource ParseShader(const std::string& filePath)
@@ -158,11 +165,7 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        GLClearErrors();
-
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-        GLCheckErrors();
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
